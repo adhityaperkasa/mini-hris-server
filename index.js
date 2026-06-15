@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const db = require("./db");
 
 const app = express();
 const PORT = 3001;
@@ -8,77 +9,75 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-// DATA SEMENTARA (nanti diganti MySQL)
-let employees = [
-  {
-    id: 1,
-    empNo: "EMP001",
-    name: "John Doe",
-    department: "HR Recruitment Department",
-    position: "Recruitment Manager",
-    status: "Active"
-  }
-];
-
-let org = [
-  { id: 1, type: "company", name: "PT ABCD", parentId: null },
-  { id: 2, type: "directorate", name: "HR Directorate", parentId: 1 },
-  { id: 3, type: "division", name: "HR Division", parentId: 2 },
-  { id: 4, type: "department", name: "HR Recruitment Department", parentId: 3 },
-  { id: 5, type: "position", name: "Recruitment Manager", parentId: 4 },
-  { id: 6, type: "position", name: "Recruiter", parentId: 4 }
-];
-
 // ========================
 // EMPLOYEE ROUTES
 // ========================
 
 // GET semua employee
 app.get("/employees", (req, res) => {
-  res.json(employees);
+  db.query("SELECT * FROM employees", (err, results) => {
+    if (err) return res.status(500).json({ message: err.message });
+    res.json(results);
+  });
 });
 
 // GET employee by id
 app.get("/employees/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const employee = employees.find(e => e.id === id);
-
-  if (!employee) {
-    return res.status(404).json({ message: "Employee tidak ditemukan" });
-  }
-
-  res.json(employee);
+  const id = req.params.id;
+  db.query(
+    "SELECT * FROM employees WHERE id = ?",
+    [id],
+    (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+      if (results.length === 0) {
+        return res.status(404).json({ message: "Employee tidak ditemukan" });
+      }
+      res.json(results[0]);
+    }
+  );
 });
 
 // POST tambah employee
 app.post("/employees", (req, res) => {
-  const newEmployee = {
-    id: Date.now(),
-    ...req.body
-  };
-
-  employees.push(newEmployee);
-  res.status(201).json(newEmployee);
+  const { empNo, name, department, position, status } = req.body;
+  db.query(
+    "INSERT INTO employees (empNo, name, department, position, status) VALUES (?, ?, ?, ?, ?)",
+    [empNo, name, department, position, status],
+    (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+      res.status(201).json({
+        id: results.insertId,
+        empNo, name, department, position, status
+      });
+    }
+  );
 });
 
 // PUT update employee
 app.put("/employees/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const index = employees.findIndex(e => e.id === id);
-
-  if (index === -1) {
-    return res.status(404).json({ message: "Employee tidak ditemukan" });
-  }
-
-  employees[index] = { id, ...req.body };
-  res.json(employees[index]);
+  const id = req.params.id;
+  const { empNo, name, department, position, status } = req.body;
+  db.query(
+    "UPDATE employees SET empNo=?, name=?, department=?, position=?, status=? WHERE id=?",
+    [empNo, name, department, position, status, id],
+    (err) => {
+      if (err) return res.status(500).json({ message: err.message });
+      res.json({ id: Number(id), empNo, name, department, position, status });
+    }
+  );
 });
 
 // DELETE hapus employee
 app.delete("/employees/:id", (req, res) => {
-  const id = Number(req.params.id);
-  employees = employees.filter(e => e.id !== id);
-  res.json({ message: "Employee berhasil dihapus" });
+  const id = req.params.id;
+  db.query(
+    "DELETE FROM employees WHERE id = ?",
+    [id],
+    (err) => {
+      if (err) return res.status(500).json({ message: err.message });
+      res.json({ message: "Employee berhasil dihapus" });
+    }
+  );
 });
 
 // ========================
@@ -87,38 +86,53 @@ app.delete("/employees/:id", (req, res) => {
 
 // GET semua org
 app.get("/org", (req, res) => {
-  res.json(org);
+  db.query("SELECT * FROM org", (err, results) => {
+    if (err) return res.status(500).json({ message: err.message });
+    res.json(results);
+  });
 });
 
 // POST tambah org node
 app.post("/org", (req, res) => {
-  const newNode = {
-    id: Date.now(),
-    ...req.body
-  };
-
-  org.push(newNode);
-  res.status(201).json(newNode);
+  const { name, type, parentId } = req.body;
+  db.query(
+    "INSERT INTO org (name, type, parentId) VALUES (?, ?, ?)",
+    [name, type, parentId || null],
+    (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+      res.status(201).json({
+        id: results.insertId,
+        name, type, parentId: parentId || null
+      });
+    }
+  );
 });
 
 // PUT update org node
 app.put("/org/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const index = org.findIndex(n => n.id === id);
-
-  if (index === -1) {
-    return res.status(404).json({ message: "Node tidak ditemukan" });
-  }
-
-  org[index] = { id, ...req.body };
-  res.json(org[index]);
+  const id = req.params.id;
+  const { name, type, parentId } = req.body;
+  db.query(
+    "UPDATE org SET name=?, type=?, parentId=? WHERE id=?",
+    [name, type, parentId || null, id],
+    (err) => {
+      if (err) return res.status(500).json({ message: err.message });
+      res.json({ id: Number(id), name, type, parentId: parentId || null });
+    }
+  );
 });
 
 // DELETE hapus org node
 app.delete("/org/:id", (req, res) => {
-  const id = Number(req.params.id);
-  org = org.filter(n => n.id !== id);
-  res.json({ message: "Node berhasil dihapus" });
+  const id = req.params.id;
+  db.query(
+    "DELETE FROM org WHERE id = ?",
+    [id],
+    (err) => {
+      if (err) return res.status(500).json({ message: err.message });
+      res.json({ message: "Node berhasil dihapus" });
+    }
+  );
 });
 
 // ========================
