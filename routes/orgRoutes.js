@@ -10,10 +10,12 @@ const {
   validateCreateOrg,
   validateUpdateOrg
 } = require("../middlewares/validateOrg");
+const verifyToken = require("../middlewares/verifyToken");
 
-router.get("/", getOrg);
-router.post("/", validateCreateOrg, createOrgNode);
-router.put("/:id", validateUpdateOrg, updateOrgNode);
-router.delete("/:id", deleteOrgNode);
+// Semua endpoint org sekarang wajib login (pakai verifyToken)
+router.get("/", verifyToken, getOrg);
+router.post("/", verifyToken, validateCreateOrg, createOrgNode);
+router.put("/:id", verifyToken, validateUpdateOrg, updateOrgNode);
+router.delete("/:id", verifyToken, deleteOrgNode);
 
 module.exports = router;

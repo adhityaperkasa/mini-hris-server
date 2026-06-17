@@ -7,11 +7,13 @@ const {
   updateEmployee,
   deleteEmployee
 } = require("../controllers/employeeController");
+const verifyToken = require("../middlewares/verifyToken");
 
-router.get("/", getEmployees);
-router.get("/:id", getEmployeeById);
-router.post("/", createEmployee);
-router.put("/:id", updateEmployee);
-router.delete("/:id", deleteEmployee);
+// Semua endpoint employee sekarang wajib login (pakai verifyToken)
+router.get("/", verifyToken, getEmployees);
+router.get("/:id", verifyToken, getEmployeeById);
+router.post("/", verifyToken, createEmployee);
+router.put("/:id", verifyToken, updateEmployee);
+router.delete("/:id", verifyToken, deleteEmployee);
 
 module.exports = router;
