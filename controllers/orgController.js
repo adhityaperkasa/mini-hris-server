@@ -1,81 +1,79 @@
 const db = require("../config/db");
 
 // GET semua org
-const getOrg = (req, res) => {
-  db.query("SELECT * FROM org", (err, results) => {
-    if (err) {
-      console.error("Error getOrg:", err.message);
-      return res.status(500).json({ message: "Gagal mengambil data organisasi" });
-    }
+const getOrg = async (req, res) => {
+  try {
+    const [results] = await db.query("SELECT * FROM org");
     res.json(results);
-  });
+  } catch (err) {
+    console.error("Error getOrg:", err.message);
+    res.status(500).json({ message: "Gagal mengambil data organisasi" });
+  }
 };
 
 // POST tambah org node
-const createOrgNode = (req, res) => {
-  const { name, type, parentId } = req.body;
+const createOrgNode = async (req, res) => {
+  try {
+    const { name, type, parentId } = req.body;
 
-  db.query(
-    "INSERT INTO org (name, type, parentId) VALUES (?, ?, ?)",
-    [name, type, parentId || null],
-    (err, results) => {
-      if (err) {
-        console.error("Error createOrgNode:", err.message);
-        return res.status(500).json({ message: "Gagal menambahkan node" });
-      }
-      res.status(201).json({
-        id: results.insertId,
-        name,
-        type,
-        parentId: parentId || null
-      });
-    }
-  );
+    const [results] = await db.query(
+      "INSERT INTO org (name, type, parentId) VALUES (?, ?, ?)",
+      [name, type, parentId || null]
+    );
+
+    res.status(201).json({
+      id: results.insertId,
+      name,
+      type,
+      parentId: parentId || null
+    });
+  } catch (err) {
+    console.error("Error createOrgNode:", err.message);
+    res.status(500).json({ message: "Gagal menambahkan node" });
+  }
 };
 
 // PUT update org node
-const updateOrgNode = (req, res) => {
-  const id = req.params.id;
-  const { name, type, parentId } = req.body;
+const updateOrgNode = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { name, type, parentId } = req.body;
 
-  db.query(
-    "UPDATE org SET name=?, type=?, parentId=? WHERE id=?",
-    [name, type, parentId || null, id],
-    (err, results) => {
-      if (err) {
-        console.error("Error updateOrgNode:", err.message);
-        return res.status(500).json({ message: "Gagal mengupdate node" });
-      }
+    const [results] = await db.query(
+      "UPDATE org SET name=?, type=?, parentId=? WHERE id=?",
+      [name, type, parentId || null, id]
+    );
 
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ message: "Node tidak ditemukan" });
-      }
-
-      res.json({ id: Number(id), name, type, parentId: parentId || null });
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: "Node tidak ditemukan" });
     }
-  );
+
+    res.json({ id: Number(id), name, type, parentId: parentId || null });
+  } catch (err) {
+    console.error("Error updateOrgNode:", err.message);
+    res.status(500).json({ message: "Gagal mengupdate node" });
+  }
 };
 
 // DELETE hapus org node
-const deleteOrgNode = (req, res) => {
-  const id = req.params.id;
+const deleteOrgNode = async (req, res) => {
+  try {
+    const id = req.params.id;
 
-  db.query(
-    "DELETE FROM org WHERE id = ?",
-    [id],
-    (err, results) => {
-      if (err) {
-        console.error("Error deleteOrgNode:", err.message);
-        return res.status(500).json({ message: "Gagal menghapus node" });
-      }
+    const [results] = await db.query(
+      "DELETE FROM org WHERE id = ?",
+      [id]
+    );
 
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ message: "Node tidak ditemukan" });
-      }
-
-      res.json({ message: "Node berhasil dihapus" });
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: "Node tidak ditemukan" });
     }
-  );
+
+    res.json({ message: "Node berhasil dihapus" });
+  } catch (err) {
+    console.error("Error deleteOrgNode:", err.message);
+    res.status(500).json({ message: "Gagal menghapus node" });
+  }
 };
 
 module.exports = {
