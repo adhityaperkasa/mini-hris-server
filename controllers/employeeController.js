@@ -1,10 +1,39 @@
 const db = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
 
-// GET semua employee
+// GET semua employee (dengan pagination & search)
 const getEmployees = asyncHandler(async (req, res) => {
-  const [results] = await db.query("SELECT * FROM employees");
-  res.json(results);
+
+  // Ambil query params, kasih nilai default kalau tidak dikirim
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const search = req.query.search || "";
+
+  const offset = (page - 1) * limit;
+
+  // Hitung total data yang cocok (untuk tahu jumlah total halaman)
+  const [countResult] = await db.query(
+    "SELECT COUNT(*) AS total FROM employees WHERE name LIKE ?",
+    [`%${search}%`]
+  );
+  const totalItems = countResult[0].total;
+  const totalPages = Math.ceil(totalItems / limit);
+
+  // Ambil data sesuai halaman & search
+  const [results] = await db.query(
+    "SELECT * FROM employees WHERE name LIKE ? LIMIT ? OFFSET ?",
+    [`%${search}%`, limit, offset]
+  );
+
+  res.json({
+    data: results,
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages
+    }
+  });
 });
 
 // GET employee by id
