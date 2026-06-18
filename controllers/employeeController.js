@@ -1,98 +1,74 @@
 const db = require("../config/db");
+const asyncHandler = require("../utils/asyncHandler");
 
 // GET semua employee
-const getEmployees = async (req, res) => {
-  try {
-    const [results] = await db.query("SELECT * FROM employees");
-    res.json(results);
-  } catch (err) {
-    console.error("Error getEmployees:", err.message);
-    res.status(500).json({ message: "Gagal mengambil data employee" });
-  }
-};
+const getEmployees = asyncHandler(async (req, res) => {
+  const [results] = await db.query("SELECT * FROM employees");
+  res.json(results);
+});
 
 // GET employee by id
-const getEmployeeById = async (req, res) => {
-  try {
-    const id = req.params.id;
-    const [results] = await db.query(
-      "SELECT * FROM employees WHERE id = ?",
-      [id]
-    );
+const getEmployeeById = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  const [results] = await db.query(
+    "SELECT * FROM employees WHERE id = ?",
+    [id]
+  );
 
-    if (results.length === 0) {
-      return res.status(404).json({ message: "Employee tidak ditemukan" });
-    }
-
-    res.json(results[0]);
-  } catch (err) {
-    console.error("Error getEmployeeById:", err.message);
-    res.status(500).json({ message: "Gagal mengambil data employee" });
+  if (results.length === 0) {
+    return res.status(404).json({ message: "Employee tidak ditemukan" });
   }
-};
+
+  res.json(results[0]);
+});
 
 // POST tambah employee
-const createEmployee = async (req, res) => {
-  try {
-    const { empNo, name, department, position, status } = req.body;
+const createEmployee = asyncHandler(async (req, res) => {
+  const { empNo, name, department, position, status } = req.body;
 
-    const [results] = await db.query(
-      "INSERT INTO employees (empNo, name, department, position, status) VALUES (?, ?, ?, ?, ?)",
-      [empNo, name, department, position, status]
-    );
+  const [results] = await db.query(
+    "INSERT INTO employees (empNo, name, department, position, status) VALUES (?, ?, ?, ?, ?)",
+    [empNo, name, department, position, status]
+  );
 
-    res.status(201).json({
-      id: results.insertId,
-      empNo, name, department, position, status
-    });
-  } catch (err) {
-    console.error("Error createEmployee:", err.message);
-    res.status(500).json({ message: "Gagal menambahkan employee" });
-  }
-};
+  res.status(201).json({
+    id: results.insertId,
+    empNo, name, department, position, status
+  });
+});
 
 // PUT update employee
-const updateEmployee = async (req, res) => {
-  try {
-    const id = req.params.id;
-    const { empNo, name, department, position, status } = req.body;
+const updateEmployee = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  const { empNo, name, department, position, status } = req.body;
 
-    const [results] = await db.query(
-      "UPDATE employees SET empNo=?, name=?, department=?, position=?, status=? WHERE id=?",
-      [empNo, name, department, position, status, id]
-    );
+  const [results] = await db.query(
+    "UPDATE employees SET empNo=?, name=?, department=?, position=?, status=? WHERE id=?",
+    [empNo, name, department, position, status, id]
+  );
 
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ message: "Employee tidak ditemukan" });
-    }
-
-    res.json({ id: Number(id), empNo, name, department, position, status });
-  } catch (err) {
-    console.error("Error updateEmployee:", err.message);
-    res.status(500).json({ message: "Gagal mengupdate employee" });
+  if (results.affectedRows === 0) {
+    return res.status(404).json({ message: "Employee tidak ditemukan" });
   }
-};
+
+  res.json({ id: Number(id), empNo, name, department, position, status });
+});
 
 // DELETE hapus employee
-const deleteEmployee = async (req, res) => {
-  try {
-    const id = req.params.id;
+const deleteEmployee = asyncHandler(async (req, res) => {
+  const id = req.params.id;
 
-    const [results] = await db.query(
-      "DELETE FROM employees WHERE id = ?",
-      [id]
-    );
+  const [results] = await db.query(
+    "DELETE FROM employees WHERE id = ?",
+    [id]
+  );
 
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ message: "Employee tidak ditemukan" });
-    }
-
-    res.json({ message: "Employee berhasil dihapus" });
-  } catch (err) {
-    console.error("Error deleteEmployee:", err.message);
-    res.status(500).json({ message: "Gagal menghapus employee" });
+  if (results.affectedRows === 0) {
+    return res.status(404).json({ message: "Employee tidak ditemukan" });
   }
-};
+
+  res.json({ message: "Employee berhasil dihapus" });
+});
 
 module.exports = {
   getEmployees,
