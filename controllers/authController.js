@@ -2,7 +2,7 @@ const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = "ganti_ini_dengan_kunci_rahasia_yang_panjang_dan_acak";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // REGISTER - buat user baru
 const register = (req, res) => {
